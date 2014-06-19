@@ -331,13 +331,14 @@ class WP_JSON_Authentication_OAuth1 extends WP_JSON_Authentication {
 
 		// Generate token
 		$key = apply_filters( 'json_oauth1_request_token_key', wp_generate_password( self::TOKEN_KEY_LENGTH, false ) );
+		$redirect_uri = isset($params['redirect_uri'])? $params['redirect_uri']: null;
 		$data = array(
 			'key'        => $key,
 			'secret'     => wp_generate_password( self::TOKEN_SECRET_LENGTH, false ),
 			'consumer'   => $consumer->ID,
 			'authorized' => false,
 			'expiration' => time() + 24 * HOUR_IN_SECONDS,
-			'callback'   => null,
+			'callback'   => $redirect_uri,
 			'verifier'   => null,
 			'user'       => null,
 		);
@@ -520,6 +521,7 @@ class WP_JSON_Authentication_OAuth1 extends WP_JSON_Authentication {
 
 		$token = (array) $token;
 		$string_to_sign = $http_method . '&' . $base_request_uri . '&' . $query_string;
+		// echo $string_to_sign;
 		$key_parts = array(
 			$consumer->secret,
 			( $token ? $token['secret'] : '' )

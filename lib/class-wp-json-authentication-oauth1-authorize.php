@@ -124,6 +124,11 @@ class WP_JSON_Authentication_OAuth1_Authorize {
 	 * @return null|WP_Error Null on success, error otherwise
 	 */
 	public function handle_callback_redirect( $verifier ) {
+		$args = array(
+			'oauth_token' => $this->token['key'],
+			'oauth_verifier' => $verifier,
+			'wp_scope' => '*',
+		);
 		if ( ! empty( $this->token['callback'] ) && $this->token['callback'] === 'oob' ) {
 			return apply_filters( 'json_oauth1_handle_callback', null, $this->token );
 		}
@@ -132,24 +137,28 @@ class WP_JSON_Authentication_OAuth1_Authorize {
 			// No callback registered, display verification code to the user
 			login_header( __( 'Access Token' ) );
 			echo '<p>' . sprintf( __( 'Your verification token is <code>%s</code>' ), $verifier ) . '</p>';
+	
+			echo '<script>'.
+					'data = JSON.stringify('.json_encode($args).');'.
+					'source = window.opener || window.parent;'.
+					'source.postMessage('.
+						'data,'.
+						'"http://hue.honeywell.com")'.
+				  '</script>';
+
 			login_footer();
 
 			return null;
 		}
 
 		$callback = $this->token['callback'];
-
 		// Ensure the URL is safe to access
 		$callback = wp_http_validate_url( $callback );
 		if ( empty( $callback ) ) {
 			return new WP_Error( 'json_oauth1_invalid_callback', __( 'The callback URL is invalid' ), array( 'status' => 400 ) );
 		}
 
-		$args = array(
-			'oauth_token' => $this->token['key'],
-			'oauth_verifier' => $verifier,
-			'wp_scope' => '*',
-		);
+		
 		$args = apply_filters( 'json_oauth1_callback_args', $args, $token );
 		$args = urlencode_deep( $args );
 		$callback = add_query_arg( $args, $callback );

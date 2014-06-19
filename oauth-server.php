@@ -45,7 +45,7 @@ function json_oauth_server_setup_authentication() {
 	) );
 }
 add_action( 'init', 'json_oauth_server_setup_authentication' );
-
+remove_action( 'login_init',          'send_frame_options_header',     10, 0 );
 /**
  * Register the authorization page
  *
